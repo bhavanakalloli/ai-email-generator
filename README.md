@@ -1,13 +1,14 @@
 # MailCraft AI — AI Email Generator
 
-A full-stack AI-powered email generation app built with **React + FastAPI + OpenAI**.  
-Users enter a prompt, select a tone, and instantly get a professional email with subject line.
+A full-stack AI-powered email generation app built with **React + FastAPI + OpenAI + Groq**.
+
+Users register/login, enter a prompt, select a tone, and instantly get a professional email with subject line — streamed word by word in real time.
 
 ---
 
 ## Screenshots
 
-> Add screenshots or a demo GIF here after running the app.
+> Add screenshots after running the app.
 
 ---
 
@@ -15,31 +16,36 @@ Users enter a prompt, select a tone, and instantly get a professional email with
 
 ### Mandatory
 - ✅ AI-generated email content (subject + body) via OpenAI
-- ✅ Tone selector: Professional, Friendly, Formal, Casual
+- ✅ Tone selector — Professional, Friendly, Formal, Casual
 - ✅ Responsive UI (mobile + desktop)
-- ✅ Backend API with FastAPI
-- ✅ Loading state & skeleton loaders
-- ✅ Full error handling (API errors, auth errors, rate limits)
+- ✅ FastAPI backend with proper REST API
+- ✅ Loading state with streaming indicator
+- ✅ Full error handling (auth errors, rate limits, API errors)
 - ✅ Clean project structure
+- ✅ README with setup instructions
 
 ### Bonus
-- ✅ Copy-to-clipboard (subject + body)
+- ✅ Streaming response (email types out word by word via SSE)
+- ✅ Rich text editor (Bold, Italic, Underline, Lists — fully editable)
+- ✅ Copy to clipboard (subject + body)
 - ✅ Email subject line generation
-- ✅ Prompt history (stored on backend, clickable to reuse)
-- ✅ Multiple AI model support (GPT-4o-mini, GPT-4o, GPT-3.5 Turbo)
-- ✅ Example prompt chips for quick start
-- ✅ Keyboard shortcut (Cmd/Ctrl + Enter to generate)
+- ✅ Prompt history (stored per user in SQLite, clickable to restore)
+- ✅ Multiple AI model support (GPT-4o Mini, GPT-4o, Llama 3.3 70B, Llama 3.1 8B)
+- ✅ JWT Authentication (Register / Login / Logout)
+- ✅ SQLite database (users + email history persist across restarts)
 
 ---
 
 ## Tech Stack
 
-| Layer    | Technology                     |
-|----------|-------------------------------|
-| Frontend | React 18, Vite, CSS Modules   |
-| Backend  | FastAPI, Python 3.11+         |
-| AI       | OpenAI API (GPT-4o-mini)      |
-| Styling  | CSS Modules, DM Sans font     |
+| Layer    | Technology                        |
+|----------|-----------------------------------|
+| Frontend | React 18, Vite, CSS Modules       |
+| Backend  | FastAPI, Python 3.11+, Uvicorn    |
+| AI       | OpenAI API, Groq API              |
+| Auth     | JWT (python-jose), passlib        |
+| Database | SQLite (built-in Python)          |
+| Streaming| SSE (Server-Sent Events)          |
 
 ---
 
@@ -48,15 +54,17 @@ Users enter a prompt, select a tone, and instantly get a professional email with
 ```
 ai-email-generator/
 ├── backend/
-│   ├── main.py              # FastAPI app (routes, OpenAI integration)
+│   ├── main.py          # FastAPI app — all routes
+│   ├── auth.py          # JWT auth helpers
+│   ├── database.py      # SQLite setup
 │   ├── requirements.txt
-│   ├── .env.example
-│   └── .env                 # ← you create this
+│   └── .env.example
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Header.jsx
+│   │   │   ├── AuthPage.jsx
 │   │   │   ├── ToneSelector.jsx
 │   │   │   ├── EmailOutput.jsx
 │   │   │   └── PromptHistory.jsx
@@ -65,13 +73,10 @@ ai-email-generator/
 │   │   ├── utils/
 │   │   │   └── api.js
 │   │   ├── App.jsx
-│   │   ├── App.module.css
-│   │   ├── index.css
 │   │   └── main.jsx
 │   ├── index.html
 │   ├── vite.config.js
-│   ├── package.json
-│   └── .env.example
+│   └── package.json
 │
 └── README.md
 ```
@@ -83,14 +88,15 @@ ai-email-generator/
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
-- An [OpenAI API key](https://platform.openai.com/api-keys)
+- OpenAI API key → [platform.openai.com](https://platform.openai.com/api-keys)
+- Groq API key → [console.groq.com](https://console.groq.com) (free)
 
 ---
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ai-email-generator.git
+git clone https://github.com/bhavanakalloli/ai-email-generator.git
 cd ai-email-generator
 ```
 
@@ -101,9 +107,14 @@ cd ai-email-generator
 ```bash
 cd backend
 
-# Create and activate virtual environment
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+
+# Activate it
+# Mac/Linux:
+source venv/bin/activate
+# Windows:
+venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
@@ -112,9 +123,11 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Edit `backend/.env` and add your OpenAI API key:
+Edit `backend/.env` and add your keys:
 ```
-OPENAI_API_KEY=sk-your-key-here
+OPENAI_API_KEY=sk-your-openai-key-here
+GROQ_API_KEY=your-groq-key-here
+SECRET_KEY=any-random-string-here
 ```
 
 Start the backend:
@@ -122,8 +135,8 @@ Start the backend:
 uvicorn main:app --reload --port 8000
 ```
 
-Backend will be available at: **http://localhost:8000**  
-API docs (Swagger UI): **http://localhost:8000/docs**
+✅ Backend running at **http://localhost:8000**  
+✅ API docs at **http://localhost:8000/docs**
 
 ---
 
@@ -133,91 +146,37 @@ Open a new terminal:
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Create .env file
-cp .env.example .env
-```
-
-The default `.env` is already configured for local development:
-```
-VITE_API_URL=http://localhost:8000
-```
-
-Start the frontend:
-```bash
 npm run dev
 ```
 
-Frontend will be available at: **http://localhost:5173**
+✅ App running at **http://localhost:5173**
 
 ---
 
 ## API Reference
 
-### `POST /api/generate`
-Generate an email from a prompt.
-
-**Request body:**
-```json
-{
-  "prompt": "Write a follow-up email after a job interview",
-  "tone": "professional",
-  "model": "gpt-4o-mini"
-}
-```
-
-**Response:**
-```json
-{
-  "id": "uuid",
-  "subject": "Following Up on Our Interview",
-  "body": "Dear [Name],\n\nThank you for...",
-  "tone": "professional",
-  "prompt": "Write a follow-up email after a job interview",
-  "created_at": "2024-01-01T12:00:00"
-}
-```
-
-### `GET /api/history`
-Returns the last 50 generated email prompts.
-
-### `DELETE /api/history`
-Clears all prompt history.
-
-### `GET /api/models`
-Returns available AI models.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | Login and get JWT token |
+| GET | `/api/auth/me` | Get current user |
+| POST | `/api/generate` | Generate email (non-streaming) |
+| POST | `/api/generate/stream` | Generate email (streaming SSE) |
+| GET | `/api/history` | Get user's email history |
+| DELETE | `/api/history` | Clear user's history |
+| GET | `/api/models` | Get available AI models |
 
 ---
 
 ## Environment Variables
 
 ### Backend (`backend/.env`)
-| Variable         | Required | Description              |
-|-----------------|----------|--------------------------|
-| `OPENAI_API_KEY` | ✅       | Your OpenAI API key      |
-
-### Frontend (`frontend/.env`)
-| Variable        | Default                    | Description        |
-|----------------|----------------------------|--------------------|
-| `VITE_API_URL`  | `http://localhost:8000`    | Backend URL        |
-
----
-
-## Deployment
-
-### Deploy backend (Railway / Render)
-1. Push code to GitHub
-2. Connect repo to [Railway](https://railway.app) or [Render](https://render.com)
-3. Set `OPENAI_API_KEY` as an environment variable
-4. Set start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-
-### Deploy frontend (Vercel)
-1. Connect repo to [Vercel](https://vercel.com)
-2. Set root directory to `frontend`
-3. Add environment variable: `VITE_API_URL=https://your-backend-url.railway.app`
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENAI_API_KEY` | ✅ | OpenAI API key |
+| `GROQ_API_KEY` | ✅ | Groq API key (free) |
+| `SECRET_KEY` | ✅ | JWT signing secret |
 
 ---
 
