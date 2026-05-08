@@ -8,7 +8,18 @@ Users register/login, enter a prompt, select a tone, and instantly get a profess
 
 ## Screenshots
 
-> Add screenshots after running the app.
+### Login Page
+![Login Page](screenshots/login.png)
+
+### Main App
+![Main App](screenshots/main.png)
+
+### AI Model Selector
+![Models](screenshots/models.png)
+
+### Generated Email
+![Generated Email](screenshots/email.png)
+
 
 ---
 
