@@ -2,10 +2,13 @@
 
 A full-stack AI-powered email generation app built with **React + FastAPI + OpenAI + Groq**.
 
+🚀 **Live Demo:** [https://ai-email-generator-ten.vercel.app](https://ai-email-generator-ten.vercel.app)
+
+🔗 **API:** [https://ai-email-generator-1-arf1.onrender.com](https://ai-email-generator-1-arf1.onrender.com)
+
 Users register/login, enter a prompt, select a tone, and instantly get a professional email with subject line — streamed word by word in real time.
 
 ---
-
 ## Screenshots
 
 ### Login Page
